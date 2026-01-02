@@ -5,17 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hangin' Around</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #f4f4f9; color: #333; }
-        h1 { margin-top: 20px; color: #2c3e50; }
-        #game-container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 500px; width: 90%; }
-        #word-display { font-size: 2.5rem; letter-spacing: 0.5rem; margin: 20px 0; font-weight: bold; color: #34495e; }
-        #message { height: 24px; margin-bottom: 20px; font-weight: bold; }
-        #keyboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(35px, 1fr)); gap: 8px; }
-        button { padding: 10px; cursor: pointer; border: 1px solid #ddd; border-radius: 4px; background: #fff; transition: all 0.2s; font-weight: bold; }
-        button:hover:not(:disabled) { background: #3498db; color: white; border-color: #3498db; }
-        button:disabled { background: #eee; cursor: not-allowed; opacity: 0.6; }
-        #hangman-viz { font-family: monospace; white-space: pre; font-size: 1.2rem; margin: 20px 0; line-height: 1.2; }
-        .reset-btn { margin-top: 20px; padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        :root { --primary: #6366f1; --bg: #f8fafc; --text: #1e293b; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
+        h1 { margin-bottom: 10px; font-size: 2.5rem; color: var(--primary); }
+        
+        #game-container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; width: 100%; max-width: 500px; }
+        
+        canvas { background: #fff; border-bottom: 3px solid #e2e8f0; margin-bottom: 20px; max-width: 100%; }
+        
+        #word-display { font-size: 2rem; letter-spacing: 0.4rem; margin: 20px 0; font-weight: 800; color: #334155; text-transform: uppercase; }
+        
+        #message { font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; height: 30px; }
+        
+        #keyboard { display: grid; grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); gap: 6px; }
+        
+        button.key { border: none; padding: 12px 5px; border-radius: 8px; background: #e2e8f0; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        button.key:hover:not(:disabled) { background: var(--primary); color: white; transform: translateY(-2px); }
+        button.key:disabled { opacity: 0.4; cursor: not-allowed; }
+        
+        .reset-btn { margin-top: 25px; width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+        .reset-btn:hover { filter: brightness(1.1); }
     </style>
 </head>
 <body>
@@ -23,84 +32,33 @@
     <h1>Hangin' Around</h1>
 
     <div id="game-container">
-        <div id="hangman-viz">
-  +---+
-  |   |
-      |
-      |
-      |
-      |
-=========</div>
+        <canvas id="hangmanCanvas" width="200" height="200"></canvas>
         
         <div id="word-display">_ _ _ _ _</div>
         <div id="message"></div>
         <div id="keyboard"></div>
-        <button class="reset-btn" onclick="initGame()">New Game</button>
+        
+        <button class="reset-btn" onclick="initGame()">Restart Game</button>
     </div>
 
     <script>
-        const words = ["GITHUB", "PROGRAMMING", "JAVASCRIPT", "DEVELOPER", "ALGORITHM", "HANGMAN", "CODE"];
-        const stages = [
-`  +---+
-  |   |
-      |
-      |
-      |
-      |
-=========`,
-`  +---+
-  |   |
-  O   |
-      |
-      |
-      |
-=========`,
-`  +---+
-  |   |
-  O   |
-  |   |
-      |
-      |
-=========`,
-`  +---+
-  |   |
-  O   |
- /|   |
-      |
-      |
-=========`,
-`  +---+
-  |   |
-  O   |
- /|\\  |
-      |
-      |
-=========`,
-`  +---+
-  |   |
-  O   |
- /|\\  |
- /    |
-      |
-=========`,
-`  +---+
-  |   |
-  O   |
- /|\\  |
- / \\  |
-      |
-=========`];
-
+        const canvas = document.getElementById('hangmanCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Non-programming word list
+        const words = ["ELEPHANT", "MOUNTAIN", "PIZZA", "BICYCLE", "SUNSET", "WHISPER", "CHICKEN", "GUITAR", "JOURNEY", "BACKPACK", "STarlight", "TROPICAL", "ISLAND"];
+        
         let selectedWord = "";
         let guessedLetters = [];
         let mistakes = 0;
 
         function initGame() {
-            selectedWord = words[Math.floor(Math.random() * words.length)];
+            selectedWord = words[Math.floor(Math.random() * words.length)].toUpperCase();
             guessedLetters = [];
             mistakes = 0;
             document.getElementById("message").innerText = "";
-            document.getElementById("message").style.color = "black";
+            clearCanvas();
+            drawBase();
             createKeyboard();
             updateDisplay();
         }
@@ -111,6 +69,7 @@
             "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(letter => {
                 const btn = document.createElement("button");
                 btn.innerText = letter;
+                btn.className = "key";
                 btn.onclick = () => handleGuess(letter, btn);
                 keyboard.appendChild(btn);
             });
@@ -120,8 +79,13 @@
             btn.disabled = true;
             if (selectedWord.includes(letter)) {
                 guessedLetters.push(letter);
+                btn.style.background = "#22c55e"; // Green for correct
+                btn.style.color = "white";
             } else {
                 mistakes++;
+                btn.style.background = "#ef4444"; // Red for wrong
+                btn.style.color = "white";
+                drawHangman();
             }
             updateDisplay();
             checkGameStatus();
@@ -130,23 +94,46 @@
         function updateDisplay() {
             const display = selectedWord.split("").map(l => guessedLetters.includes(l) ? l : "_").join(" ");
             document.getElementById("word-display").innerText = display;
-            document.getElementById("hangman-viz").innerText = stages[mistakes];
+        }
+
+        // --- Graphics Logic ---
+        function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.lineWidth = 4; ctx.strokeStyle = "#1e293b"; }
+
+        function drawBase() {
+            ctx.beginPath();
+            ctx.moveTo(20, 180); ctx.lineTo(180, 180); // Base
+            ctx.moveTo(40, 180); ctx.lineTo(40, 20);   // Post
+            ctx.lineTo(120, 20); ctx.lineTo(120, 40);  // Beam & Rope
+            ctx.stroke();
+        }
+
+        function drawHangman() {
+            ctx.beginPath();
+            switch(mistakes) {
+                case 1: ctx.arc(120, 55, 15, 0, Math.PI * 2); break; // Head
+                case 2: ctx.moveTo(120, 70); ctx.lineTo(120, 120); break; // Body
+                case 3: ctx.moveTo(120, 80); ctx.lineTo(90, 100); break; // Left Arm
+                case 4: ctx.moveTo(120, 80); ctx.lineTo(150, 100); break; // Right Arm
+                case 5: ctx.moveTo(120, 120); ctx.lineTo(90, 150); break; // Left Leg
+                case 6: ctx.moveTo(120, 120); ctx.lineTo(150, 150); break; // Right Leg
+            }
+            ctx.stroke();
         }
 
         function checkGameStatus() {
             if (!document.getElementById("word-display").innerText.includes("_")) {
-                document.getElementById("message").innerText = "YOU WIN! 🎉";
-                document.getElementById("message").style.color = "#27ae60";
+                document.getElementById("message").innerText = "YOU SAVED THEM! 🎉";
+                document.getElementById("message").style.color = "#16a34a";
                 disableAllButtons();
-            } else if (mistakes >= stages.length - 1) {
-                document.getElementById("message").innerText = `GAME OVER! Word was: ${selectedWord}`;
-                document.getElementById("message").style.color = "#e74c3c";
+            } else if (mistakes >= 6) {
+                document.getElementById("message").innerText = `THE WORD WAS: ${selectedWord}`;
+                document.getElementById("message").style.color = "#dc2626";
                 disableAllButtons();
             }
         }
 
         function disableAllButtons() {
-            const buttons = document.querySelectorAll("#keyboard button");
+            const buttons = document.querySelectorAll(".key");
             buttons.forEach(b => b.disabled = true);
         }
 
