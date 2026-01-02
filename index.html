@@ -3,243 +3,204 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hangin' Around</title>
+    <title>Hangin' Around | Ultra HD</title>
     <style>
         :root {
-            --primary: #4f46e5;
-            --success: #22c55e;
-            --danger: #ef4444;
-            --bg: #0f172a;
+            --glow: #00f2ff;
+            --danger: #ff0055;
+            --glass: rgba(255, 255, 255, 0.1);
         }
 
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: var(--bg);
+            margin: 0;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #0f0f1b 100%);
             color: white;
+            font-family: 'Inter', -apple-system, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             min-height: 100vh;
-            margin: 0;
+            overflow-x: hidden;
         }
 
-        #game-board {
-            background: #1e293b;
-            padding: 30px;
-            border-radius: 24px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        h1 {
+            font-size: 3rem;
+            text-transform: uppercase;
+            letter-spacing: 10px;
+            margin: 40px 0 10px;
+            background: linear-gradient(to right, #00f2ff, #7000ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 15px rgba(0, 242, 255, 0.5));
+        }
+
+        #game-viewport {
+            width: 95%;
+            max-width: 600px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
             text-align: center;
-            width: 90%;
-            max-width: 450px;
         }
 
-        /* The Drawing Area */
-        #viz-container {
-            background: #334155;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            padding: 10px;
+        /* SVG Graphics Area */
+        #illustration {
+            width: 240px;
+            height: 240px;
+            margin: 0 auto;
+            filter: drop-shadow(0 0 10px var(--glow));
         }
 
-        canvas {
-            max-width: 100%;
+        .draw-path {
+            fill: none;
+            stroke: white;
+            stroke-width: 4;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: stroke-dashoffset 0.8s ease-in-out;
         }
+
+        .hidden-part { opacity: 0; transition: opacity 0.5s ease; }
+        .visible-part { opacity: 1; }
 
         #word-display {
-            font-size: 2.5rem;
-            font-weight: 900;
-            letter-spacing: 0.5rem;
-            margin: 20px 0;
-            color: #f8fafc;
-            text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+            font-size: 3rem;
+            margin: 30px 0;
+            font-weight: 200;
+            letter-spacing: 12px;
         }
 
-        .letter-slot {
+        .letter {
             display: inline-block;
-            border-bottom: 4px solid #64748b;
-            margin: 0 5px;
-            min-width: 30px;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .revealed {
-            border-bottom-color: var(--primary);
-            transform: scale(1.1);
+            border-bottom: 2px solid var(--glow);
+            margin: 0 8px;
+            min-width: 40px;
+            text-shadow: 0 0 20px var(--glow);
         }
 
         #keyboard {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(35px, 1fr));
-            gap: 8px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(45px, 1fr));
+            gap: 12px;
+            margin-top: 30px;
         }
 
         .key {
-            background: #475569;
-            border: none;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
-            padding: 12px 5px;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.1s;
-        }
-
-        .key:hover { background: #64748b; }
-        .key.correct { background: var(--success) !important; }
-        .key.wrong { background: var(--danger) !important; opacity: 0.5; }
-
-        .status-msg {
-            font-size: 1.2rem;
-            font-weight: bold;
-            height: 30px;
-            margin: 15px 0;
-        }
-
-        .btn-new {
-            background: var(--primary);
-            border: none;
-            color: white;
-            padding: 15px 30px;
+            padding: 15px 5px;
             border-radius: 12px;
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-weight: bold;
             cursor: pointer;
-            width: 100%;
-            margin-top: 10px;
+            transition: all 0.2s;
         }
+
+        .key:hover { background: var(--glow); color: black; box-shadow: 0 0 20px var(--glow); transform: translateY(-3px); }
+        .key:disabled { opacity: 0.2; cursor: not-allowed; transform: none; }
+        .key.hit { background: #00ff88; border-color: #00ff88; color: black; }
+        .key.miss { background: var(--danger); border-color: var(--danger); }
+
+        .btn-restart {
+            margin-top: 30px;
+            padding: 15px 40px;
+            background: transparent;
+            border: 2px solid var(--glow);
+            color: var(--glow);
+            border-radius: 50px;
+            text-transform: uppercase;
+            font-weight: 900;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-restart:hover { background: var(--glow); color: black; }
+
+        #hint { color: #888; font-size: 0.9rem; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <h1 style="margin-bottom: 10px;">Hangin' Around</h1>
-    <p id="category-label" style="color: #94a3b8; margin-bottom: 20px;">Category: Loading...</p>
-
-    <div id="game-board">
-        <div id="viz-container">
-            <canvas id="hangCanvas" width="200" height="200"></canvas>
-        </div>
+    <h1>Hangin' Around</h1>
+    <div id="game-viewport">
         
+        <svg id="illustration" viewBox="0 0 200 200">
+            <path class="draw-path" d="M20,180 L180,180 M50,180 L50,20 L130,20 L130,40" stroke="#555" />
+            <circle id="p0" class="hidden-part" cx="130" cy="55" r="15" stroke="white" fill="none" stroke-width="4"/>
+            <path id="p1" class="hidden-part draw-path" d="M130,70 L130,120" />
+            <path id="p2" class="hidden-part draw-path" d="M130,85 L100,105" />
+            <path id="p3" class="hidden-part draw-path" d="M130,85 L160,105" />
+            <path id="p4" class="hidden-part draw-path" d="M130,120 L105,155" />
+            <path id="p5" class="hidden-part draw-path" d="M130,120 L155,155" />
+        </svg>
+
+        <div id="hint">CATEGORY: <span id="cat-text">...</span></div>
         <div id="word-display"></div>
-        <div id="status" class="status-msg"></div>
         <div id="keyboard"></div>
         
-        <button class="btn-new" onclick="startGame()">New Game</button>
+        <button class="btn-restart" onclick="init()">Restart System</button>
     </div>
 
 <script>
-    const canvas = document.getElementById('hangCanvas');
-    const ctx = canvas.getContext('2d');
-    
-    const wordBank = [
-        { word: "CHEESEBURGER", cat: "Food" },
-        { word: "KANGAROO", cat: "Animal" },
-        { word: "SKATEBOARD", cat: "Hobby" },
-        { word: "ASTRONAUT", cat: "Job" },
-        { word: "PINEAPPLE", cat: "Food" },
-        { word: "HELICOPTER", cat: "Vehicle" },
-        { word: "WATERMELON", cat: "Food" },
-        { word: "BACKPACK", cat: "Object" }
+    const data = [
+        {w: "AURORA", c: "Nature"}, {w: "SPAGHETTI", c: "Food"},
+        {w: "AVALANCHE", c: "Nature"}, {w: "CHOCOLATE", c: "Food"},
+        {w: "SATELLITE", c: "Space"}, {w: "BUNGALOW", c: "Building"},
+        {w: "HOLOGRAPH", c: "Tech"}, {w: "FLAMINGO", c: "Animal"}
     ];
 
-    let currentWord = "";
-    let guessed = [];
-    let mistakes = 0;
+    let word, guessed, mistakes;
 
-    function startGame() {
-        const item = wordBank[Math.floor(Math.random() * wordBank.length)];
-        currentWord = item.word;
-        document.getElementById('category-label').innerText = "Category: " + item.cat;
+    function init() {
+        const pick = data[Math.floor(Math.random() * data.length)];
+        word = pick.w;
+        document.getElementById('cat-text').innerText = pick.c;
         guessed = [];
         mistakes = 0;
-        document.getElementById('status').innerText = "";
         
-        drawStage();
-        renderWord();
-        renderKeyboard();
+        // Reset Visuals
+        for(let i=0; i<6; i++) document.getElementById(`p${i}`).setAttribute('class', 'hidden-part');
+        render();
     }
 
-    function drawStage() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = "#f8fafc";
-        ctx.lineWidth = 5;
-        ctx.lineCap = "round";
-
-        // Gallows
-        ctx.beginPath();
-        ctx.moveTo(30, 180); ctx.lineTo(170, 180); // Base
-        ctx.moveTo(50, 180); ctx.lineTo(50, 20);   // Post
-        ctx.lineTo(130, 20); ctx.lineTo(130, 40);  // Arm
-        ctx.stroke();
-    }
-
-    function drawBody() {
-        ctx.strokeStyle = "#f8fafc";
-        ctx.beginPath();
-        if (mistakes > 0) ctx.arc(130, 55, 15, 0, Math.PI*2); // Head
-        if (mistakes > 1) { ctx.moveTo(130, 70); ctx.lineTo(130, 120); } // Body
-        if (mistakes > 2) { ctx.moveTo(130, 80); ctx.lineTo(100, 100); } // Left Arm
-        if (mistakes > 3) { ctx.moveTo(130, 80); ctx.lineTo(160, 100); } // Right Arm
-        if (mistakes > 4) { ctx.moveTo(130, 120); ctx.lineTo(105, 150); } // Left Leg
-        if (mistakes > 5) { ctx.moveTo(130, 120); ctx.lineTo(155, 150); } // Right Leg
-        ctx.stroke();
-    }
-
-    function renderWord() {
-        const display = currentWord.split('').map(letter => 
-            `<span class="letter-slot ${guessed.includes(letter) ? 'revealed' : ''}">
-                ${guessed.includes(letter) ? letter : '&nbsp;'}
-            </span>`
-        ).join('');
+    function render() {
+        const display = word.split('').map(l => `<span class="letter">${guessed.includes(l) ? l : ''}</span>`).join('');
         document.getElementById('word-display').innerHTML = display;
-    }
-
-    function renderKeyboard() {
+        
         const kb = document.getElementById('keyboard');
-        kb.innerHTML = "";
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(l => {
+        kb.innerHTML = '';
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').forEach(l => {
             const btn = document.createElement('button');
             btn.className = 'key';
+            if(guessed.includes(l)) {
+                btn.disabled = true;
+                btn.classList.add(word.includes(l) ? 'hit' : 'miss');
+            }
             btn.innerText = l;
-            btn.onclick = () => makeGuess(l, btn);
+            btn.onclick = () => {
+                guessed.push(l);
+                if(!word.includes(l)) {
+                    document.getElementById(`p${mistakes}`).setAttribute('class', 'visible-part draw-path');
+                    mistakes++;
+                }
+                render();
+                check();
+            };
             kb.appendChild(btn);
         });
     }
 
-    function makeGuess(letter, btn) {
-        if (currentWord.includes(letter)) {
-            guessed.push(letter);
-            btn.classList.add('correct');
-        } else {
-            mistakes++;
-            btn.classList.add('wrong');
-            drawBody();
-        }
-        btn.disabled = true;
-        renderWord();
-        checkGame();
+    function check() {
+        const win = word.split('').every(l => guessed.includes(l));
+        if(win) setTimeout(() => alert("ACCESS GRANTED - YOU WIN!"), 200);
+        if(mistakes >= 6) setTimeout(() => alert("SYSTEM CRITICAL - WORD WAS: " + word), 200);
     }
 
-    function checkGame() {
-        const isWin = currentWord.split('').every(l => guessed.includes(l));
-        if (isWin) {
-            document.getElementById('status').innerText = "WINNER! 🏆";
-            document.getElementById('status').style.color = "var(--success)";
-            disableKeys();
-        } else if (mistakes >= 6) {
-            document.getElementById('status').innerText = "GAME OVER: " + currentWord;
-            document.getElementById('status').style.color = "var(--danger)";
-            disableKeys();
-        }
-    }
-
-    function disableKeys() {
-        document.querySelectorAll('.key').forEach(b => b.disabled = true);
-    }
-
-    startGame();
+    init();
 </script>
-
 </body>
 </html>
